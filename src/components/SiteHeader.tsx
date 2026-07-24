@@ -23,7 +23,13 @@ export function SiteHeader() {
             href="/"
             className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
-            변환 도구
+            규격 변환
+          </Link>
+          <Link
+            href="/split"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            상세페이지 분할
           </Link>
           <Link
             href="/guide"

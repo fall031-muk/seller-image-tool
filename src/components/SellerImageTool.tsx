@@ -13,6 +13,11 @@ import {
 } from "@/lib/image/process";
 import { buildZip, downloadBlob } from "@/lib/image/zip";
 import { removeBg, blobToImage, type RemoveBgProgress } from "@/lib/image/removeBg";
+import {
+  parseCsvMapping,
+  findMapping,
+  type CsvMappingResult,
+} from "@/lib/image/csvMapping";
 
 type SourceImage = {
   file: File;
@@ -48,10 +53,14 @@ export function SellerImageTool() {
   });
   const [aiPhase, setAiPhase] = useState<RemoveBgProgress | null>(null);
   const [removeBgEnabled, setRemoveBgEnabled] = useState(false);
+  const [csvMapping, setCsvMapping] = useState<CsvMappingResult | null>(null);
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [csvError, setCsvError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const allSpecs = useMemo(
     () => PLATFORMS.flatMap((p) => p.specs.map((s) => ({ p, s }))),
@@ -130,13 +139,25 @@ export function SellerImageTool() {
           img = await loadImage(src.file);
         }
         setAiPhase(null);
+
+        const mapping = findMapping(csvMapping, src.file.name);
+        const perImageOptions = mapping
+          ? {
+              ...options,
+              fileName: {
+                ...options.fileName,
+                prefix: mapping.productCode,
+              },
+            }
+          : options;
+
         for (const { platformId, spec } of selectedList) {
           const result = await processImage(
             img,
             src.file.name,
             spec,
             platformId,
-            options,
+            perImageOptions,
           );
           out.push(result);
           setProgress((prev) => ({ ...prev, done: prev.done + 1 }));
@@ -149,7 +170,30 @@ export function SellerImageTool() {
       setAiPhase(null);
       setProcessing(false);
     }
-  }, [sources, selectedSpecs, allSpecs, options, removeBgEnabled]);
+  }, [sources, selectedSpecs, allSpecs, options, removeBgEnabled, csvMapping]);
+
+  const handleCsv = useCallback(async (file: File) => {
+    setCsvError(null);
+    try {
+      const result = await parseCsvMapping(file);
+      if (result.rows.length === 0) {
+        setCsvError(
+          "CSV에서 유효한 행을 찾지 못했습니다. 헤더에 '파일명'과 '상품코드' 열이 있어야 합니다.",
+        );
+        setCsvMapping(null);
+        setCsvFileName(null);
+        return;
+      }
+      setCsvMapping(result);
+      setCsvFileName(file.name);
+    } catch (err) {
+      setCsvError(
+        err instanceof Error ? err.message : "CSV 파싱 중 오류가 발생했습니다",
+      );
+      setCsvMapping(null);
+      setCsvFileName(null);
+    }
+  }, []);
 
   const downloadZip = useCallback(async () => {
     if (results.length === 0) return;
@@ -407,6 +451,80 @@ export function SellerImageTool() {
               )}
             </div>
           </label>
+        </div>
+
+        <div className="mb-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                📋 상품코드 CSV 매핑 (선택)
+              </div>
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                파일명과 상품코드가 담긴 CSV를 올리면 결과 파일명에 상품코드가
+                자동으로 붙습니다.{" "}
+                <span className="text-zinc-500">
+                  헤더 예: <code className="rounded bg-zinc-100 dark:bg-zinc-800 px-1">파일명,상품코드,상품명</code>
+                  {" · "}대소문자·언더스코어·하이픈 무관.
+                </span>
+              </p>
+              {csvFileName && csvMapping && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-md bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-emerald-800 dark:text-emerald-300">
+                    ✓ {csvFileName} · {csvMapping.rows.length}개 행 매핑됨
+                  </span>
+                  {sources.length > 0 && (
+                    <span className="text-zinc-500">
+                      선택 이미지 매칭:{" "}
+                      {
+                        sources.filter(
+                          (s) => findMapping(csvMapping, s.file.name),
+                        ).length
+                      }
+                      /{sources.length}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCsvMapping(null);
+                      setCsvFileName(null);
+                      setCsvError(null);
+                    }}
+                    className="text-zinc-500 hover:text-red-500"
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+              {csvMapping && csvMapping.errors.length > 0 && (
+                <div className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  경고: {csvMapping.errors.length}개 행에서 문제가 있었습니다 (
+                  {csvMapping.errors[0]})
+                </div>
+              )}
+              {csvError && (
+                <div className="mt-2 text-xs text-red-600 dark:text-red-400">
+                  {csvError}
+                </div>
+              )}
+            </div>
+            <div>
+              <input
+                ref={csvInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleCsv(e.target.files[0])}
+              />
+              <button
+                type="button"
+                onClick={() => csvInputRef.current?.click()}
+                className="whitespace-nowrap rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              >
+                CSV 선택
+              </button>
+            </div>
+          </div>
         </div>
 
         <button

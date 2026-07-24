@@ -25,7 +25,15 @@ export function SiteFooter() {
                 href="/"
                 className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600"
               >
-                이미지 변환기
+                플랫폼 규격 변환
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/split"
+                className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600"
+              >
+                상세페이지 이미지 분할
               </Link>
             </li>
           </ul>
