@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SITE, absoluteUrl } from "@/lib/site";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +17,60 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "셀러 이미지 변환기 — 스마트스토어/쿠팡/무신사 규격 자동 변환",
-  description:
-    "상품 이미지 하나로 스마트스토어, 쿠팡, 11번가, 무신사 등 각 플랫폼 규격에 맞춘 이미지를 한 번에 만드세요. 100% 브라우저에서 처리되어 이미지가 서버에 올라가지 않습니다.",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} — 스마트스토어/쿠팡/무신사 규격 자동 변환`,
+    template: `%s | ${SITE.name}`,
+  },
+  description: SITE.description,
+  keywords: [...SITE.keywords],
+  authors: [{ name: SITE.author }],
+  creator: SITE.author,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: SITE.locale,
+    url: SITE.url,
+    siteName: SITE.name,
+    title: `${SITE.name} — 상품 이미지 한 장으로 모든 플랫폼 규격 자동 변환`,
+    description: SITE.description,
+    images: [
+      {
+        url: absoluteUrl(SITE.ogImage),
+        width: 1200,
+        height: 630,
+        alt: SITE.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — 셀러용 이미지 자동 변환`,
+    description: SITE.description,
+    images: [absoluteUrl(SITE.ogImage)],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  category: "productivity",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -28,7 +83,12 @@ export default function RootLayout({
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+        <Analytics />
+      </body>
     </html>
   );
 }

@@ -3,10 +3,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { PLATFORMS, type PlatformSpec } from "@/lib/platforms/specs";
 import {
+  DEFAULT_OPTIONS,
   loadImage,
   processImage,
   formatBytes,
   type ProcessedImage,
+  type ProcessOptions,
+  type WatermarkPosition,
 } from "@/lib/image/process";
 import { buildZip, downloadBlob } from "@/lib/image/zip";
 
@@ -21,11 +24,21 @@ const DEFAULT_SELECTED = new Set(
   ),
 );
 
+const WATERMARK_POSITIONS: { value: WatermarkPosition; label: string }[] = [
+  { value: "bottom-right", label: "우하단" },
+  { value: "bottom-left", label: "좌하단" },
+  { value: "bottom-center", label: "하단 중앙" },
+  { value: "top-right", label: "우상단" },
+  { value: "top-left", label: "좌상단" },
+  { value: "center", label: "정중앙" },
+];
+
 export function SellerImageTool() {
   const [sources, setSources] = useState<SourceImage[]>([]);
   const [selectedSpecs, setSelectedSpecs] = useState<Set<string>>(
     new Set(DEFAULT_SELECTED),
   );
+  const [options, setOptions] = useState<ProcessOptions>(DEFAULT_OPTIONS);
   const [results, setResults] = useState<ProcessedImage[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number }>({
@@ -34,6 +47,7 @@ export function SellerImageTool() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const allSpecs = useMemo(
@@ -47,7 +61,6 @@ export function SellerImageTool() {
     );
     if (files.length === 0) return;
     setSources((prev) => {
-      // 기존 것 revoke
       prev.forEach((p) => URL.revokeObjectURL(p.previewUrl));
       return files.map((file) => ({
         file,
@@ -108,7 +121,13 @@ export function SellerImageTool() {
       for (const src of sources) {
         const img = await loadImage(src.file);
         for (const { platformId, spec } of selectedList) {
-          const result = await processImage(img, src.file.name, spec, platformId);
+          const result = await processImage(
+            img,
+            src.file.name,
+            spec,
+            platformId,
+            options,
+          );
           out.push(result);
           setProgress((prev) => ({ ...prev, done: prev.done + 1 }));
         }
@@ -119,7 +138,7 @@ export function SellerImageTool() {
     } finally {
       setProcessing(false);
     }
-  }, [sources, selectedSpecs, allSpecs]);
+  }, [sources, selectedSpecs, allSpecs, options]);
 
   const downloadZip = useCallback(async () => {
     if (results.length === 0) return;
@@ -138,6 +157,32 @@ export function SellerImageTool() {
       if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
     },
     [handleFiles],
+  );
+
+  const setWatermark = useCallback(
+    <K extends keyof ProcessOptions["watermark"]>(
+      key: K,
+      value: ProcessOptions["watermark"][K],
+    ) => {
+      setOptions((prev) => ({
+        ...prev,
+        watermark: { ...prev.watermark, [key]: value },
+      }));
+    },
+    [],
+  );
+
+  const setFileName = useCallback(
+    <K extends keyof ProcessOptions["fileName"]>(
+      key: K,
+      value: ProcessOptions["fileName"][K],
+    ) => {
+      setOptions((prev) => ({
+        ...prev,
+        fileName: { ...prev.fileName, [key]: value },
+      }));
+    },
+    [],
   );
 
   return (
@@ -274,6 +319,162 @@ export function SellerImageTool() {
         </div>
       </section>
 
+      <section className="mb-6">
+        <button
+          type="button"
+          onClick={() => setShowOptions((v) => !v)}
+          className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:text-emerald-600 dark:hover:text-emerald-400"
+        >
+          <span
+            className={`inline-block transition ${
+              showOptions ? "rotate-90" : ""
+            }`}
+          >
+            ▶
+          </span>
+          고급 옵션 (워터마크 · 파일명)
+        </button>
+
+        {showOptions && (
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={options.watermark.enabled}
+                  onChange={(e) => setWatermark("enabled", e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 text-emerald-600"
+                />
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  텍스트 워터마크
+                </span>
+              </label>
+              <div className="mt-3 space-y-3">
+                <input
+                  type="text"
+                  placeholder="예: 브랜드명 또는 도메인"
+                  value={options.watermark.text}
+                  onChange={(e) => setWatermark("text", e.target.value)}
+                  disabled={!options.watermark.enabled}
+                  className="w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm disabled:opacity-50"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-xs text-zinc-600 dark:text-zinc-400">
+                    위치
+                    <select
+                      value={options.watermark.position}
+                      onChange={(e) =>
+                        setWatermark(
+                          "position",
+                          e.target.value as WatermarkPosition,
+                        )
+                      }
+                      disabled={!options.watermark.enabled}
+                      className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-sm disabled:opacity-50"
+                    >
+                      {WATERMARK_POSITIONS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs text-zinc-600 dark:text-zinc-400">
+                    글자 색상
+                    <input
+                      type="color"
+                      value={options.watermark.color}
+                      onChange={(e) => setWatermark("color", e.target.value)}
+                      disabled={!options.watermark.enabled}
+                      className="mt-1 h-8 w-full rounded border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
+                    />
+                  </label>
+                </div>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                  투명도 ({Math.round(options.watermark.opacity * 100)}%)
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    value={Math.round(options.watermark.opacity * 100)}
+                    onChange={(e) =>
+                      setWatermark("opacity", Number(e.target.value) / 100)
+                    }
+                    disabled={!options.watermark.enabled}
+                    className="mt-1 w-full disabled:opacity-50"
+                  />
+                </label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                  크기 ({Math.round(options.watermark.sizeRatio * 100)}%)
+                  <input
+                    type="range"
+                    min={2}
+                    max={10}
+                    value={Math.round(options.watermark.sizeRatio * 100)}
+                    onChange={(e) =>
+                      setWatermark("sizeRatio", Number(e.target.value) / 100)
+                    }
+                    disabled={!options.watermark.enabled}
+                    className="mt-1 w-full disabled:opacity-50"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4">
+              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                파일명 규칙
+              </div>
+              <div className="mt-3 space-y-3">
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                  접두어 (상품코드/브랜드명 등)
+                  <input
+                    type="text"
+                    placeholder="예: SKU12345"
+                    value={options.fileName.prefix}
+                    onChange={(e) => setFileName("prefix", e.target.value)}
+                    className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={options.fileName.includeOriginalName}
+                    onChange={(e) =>
+                      setFileName("includeOriginalName", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600"
+                  />
+                  원본 파일명 포함
+                </label>
+                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={options.fileName.includeSpecId}
+                    onChange={(e) =>
+                      setFileName("includeSpecId", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600"
+                  />
+                  플랫폼/규격 ID 포함 (예: smartstore-main)
+                </label>
+                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={options.fileName.includeDimensions}
+                    onChange={(e) =>
+                      setFileName("includeDimensions", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600"
+                  />
+                  가로×세로 포함 (예: 1000x1000)
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       <section className="mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <button
           type="button"
@@ -341,13 +542,6 @@ export function SellerImageTool() {
           </div>
         </section>
       )}
-
-      <footer className="mt-12 border-t border-zinc-200 dark:border-zinc-800 pt-6 text-xs text-zinc-500">
-        <p>
-          플랫폼 규격은 참고용입니다. 정확한 최신 규격은 각 플랫폼 셀러센터
-          가이드를 확인하세요.
-        </p>
-      </footer>
     </div>
   );
 }
