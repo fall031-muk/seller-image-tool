@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { AdSenseLoader } from "@/components/AdSense";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -91,6 +92,7 @@ export default function RootLayout({
         <div className="flex-1">{children}</div>
         <SiteFooter />
         <Analytics />
+        <AdSenseLoader />
       </body>
     </html>
   );

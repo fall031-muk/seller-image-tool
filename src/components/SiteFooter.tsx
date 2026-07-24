@@ -57,13 +57,19 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <span className="text-xs text-zinc-500">
             © {new Date().getFullYear()} {SITE.name}
           </span>
-          <span className="text-xs text-zinc-500">
-            플랫폼 규격은 참고용입니다. 최신 규격은 각 셀러센터에서 확인하세요.
-          </span>
+          <div className="flex items-center gap-4 text-xs text-zinc-500">
+            <Link href="/privacy" className="hover:text-emerald-600">
+              개인정보처리방침
+            </Link>
+            <Link href="/terms" className="hover:text-emerald-600">
+              이용약관
+            </Link>
+            <span>플랫폼 규격은 참고용</span>
+          </div>
         </div>
       </div>
     </footer>
