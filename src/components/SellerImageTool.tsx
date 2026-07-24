@@ -343,7 +343,7 @@ export function SellerImageTool() {
               <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 🪄 AI 배경 자동 제거
                 <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  BETA
+                  BETA · 미리보기용
                 </span>
               </div>
               <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
@@ -353,6 +353,58 @@ export function SellerImageTool() {
                   최초 사용 시 AI 모델(약 40MB)이 브라우저에 캐시됩니다.
                 </span>
               </div>
+              <div className="mt-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 px-2.5 py-1.5 text-[11px] text-amber-800 dark:text-amber-300">
+                <strong>품질 안내</strong>: 브라우저에서 돌아가는 경량 모델이라
+                복잡한 배경/머리카락/반투명 물체에서 정확도가 떨어질 수 있어요.
+                고품질이 필요하면{" "}
+                <a
+                  href="https://www.remove.bg/upload"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:no-underline"
+                >
+                  remove.bg
+                </a>
+                {" · "}
+                <a
+                  href="https://www.photoroom.com/tools/background-remover"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:no-underline"
+                >
+                  Photoroom
+                </a>{" "}
+                등 상용 서비스가 유리합니다.
+              </div>
+              {removeBgEnabled && aiPhase && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-700 dark:text-zinc-300">
+                    <span>
+                      {aiPhase.message}
+                      {aiPhase.device && (
+                        <span className="ml-1 text-zinc-500">
+                          · {aiPhase.device === "gpu" ? "WebGPU" : "CPU"}
+                        </span>
+                      )}
+                    </span>
+                    {aiPhase.ratio !== undefined && (
+                      <span>{Math.round(aiPhase.ratio * 100)}%</span>
+                    )}
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                    <div
+                      className="h-full bg-emerald-500 transition-all"
+                      style={{
+                        width: `${
+                          aiPhase.ratio !== undefined
+                            ? Math.round(aiPhase.ratio * 100)
+                            : 40
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </label>
         </div>
