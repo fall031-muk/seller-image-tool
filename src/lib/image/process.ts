@@ -15,6 +15,10 @@ export type WatermarkOptions = {
   opacity: number; // 0.0 ~ 1.0
   color: string;
   sizeRatio: number; // 캔버스 짧은 변 대비 폰트 크기 비율 (0.02 ~ 0.1)
+  // 로고 이미지 워터마크
+  imageDataUrl?: string;
+  imageScale?: number; // 캔버스 짧은 변 대비 이미지 크기 비율 (0.05 ~ 0.4)
+  imageOpacity?: number; // 0.0 ~ 1.0
 };
 
 export type FileNameOptions = {
@@ -37,6 +41,9 @@ export const DEFAULT_OPTIONS: ProcessOptions = {
     opacity: 0.5,
     color: "#ffffff",
     sizeRatio: 0.04,
+    imageDataUrl: undefined,
+    imageScale: 0.15,
+    imageOpacity: 0.7,
   },
   fileName: {
     prefix: "",
@@ -108,13 +115,37 @@ function computeContainRect(
   return { x, y, w, h };
 }
 
-function drawWatermark(
+function computeWatermarkPosition(
+  width: number,
+  height: number,
+  itemW: number,
+  itemH: number,
+  padding: number,
+  position: WatermarkPosition,
+): { x: number; y: number } {
+  switch (position) {
+    case "bottom-right":
+      return { x: width - itemW - padding, y: height - itemH - padding };
+    case "bottom-left":
+      return { x: padding, y: height - itemH - padding };
+    case "bottom-center":
+      return { x: (width - itemW) / 2, y: height - itemH - padding };
+    case "top-right":
+      return { x: width - itemW - padding, y: padding };
+    case "top-left":
+      return { x: padding, y: padding };
+    case "center":
+      return { x: (width - itemW) / 2, y: (height - itemH) / 2 };
+  }
+}
+
+function drawTextWatermark(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   wm: WatermarkOptions,
 ) {
-  if (!wm.enabled || !wm.text.trim()) return;
+  if (!wm.text.trim()) return;
 
   const shortSide = Math.min(width, height);
   const fontPx = Math.max(10, Math.round(shortSide * wm.sizeRatio));
@@ -124,50 +155,72 @@ function drawWatermark(
   ctx.globalAlpha = Math.max(0, Math.min(1, wm.opacity));
   ctx.fillStyle = wm.color;
   ctx.font = `600 ${fontPx}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
-  ctx.textBaseline = "alphabetic";
-
-  // 그림자로 대비 확보
+  ctx.textBaseline = "top";
   ctx.shadowColor = "rgba(0,0,0,0.4)";
   ctx.shadowBlur = Math.round(fontPx * 0.15);
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
 
-  const metrics = ctx.measureText(wm.text);
-  const textW = metrics.width;
+  const textW = ctx.measureText(wm.text).width;
   const textH = fontPx;
-
-  let x = padding;
-  let y = height - padding;
-
-  switch (wm.position) {
-    case "bottom-right":
-      x = width - textW - padding;
-      y = height - padding;
-      break;
-    case "bottom-left":
-      x = padding;
-      y = height - padding;
-      break;
-    case "bottom-center":
-      x = (width - textW) / 2;
-      y = height - padding;
-      break;
-    case "top-right":
-      x = width - textW - padding;
-      y = padding + textH;
-      break;
-    case "top-left":
-      x = padding;
-      y = padding + textH;
-      break;
-    case "center":
-      x = (width - textW) / 2;
-      y = (height + textH) / 2;
-      break;
-  }
+  const { x, y } = computeWatermarkPosition(
+    width,
+    height,
+    textW,
+    textH,
+    padding,
+    wm.position,
+  );
 
   ctx.fillText(wm.text, x, y);
   ctx.restore();
+}
+
+async function drawImageWatermark(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  wm: WatermarkOptions,
+) {
+  if (!wm.imageDataUrl) return;
+  const img = await loadImageFromSrc(wm.imageDataUrl);
+  const shortSide = Math.min(width, height);
+  const scale = Math.max(0.02, Math.min(0.5, wm.imageScale ?? 0.15));
+  const targetW = Math.round(shortSide * scale);
+  const ratio = img.naturalHeight / img.naturalWidth;
+  const targetH = Math.round(targetW * ratio);
+  const padding = Math.round(shortSide * 0.03);
+  const { x, y } = computeWatermarkPosition(
+    width,
+    height,
+    targetW,
+    targetH,
+    padding,
+    wm.position,
+  );
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, wm.imageOpacity ?? 0.7));
+  ctx.drawImage(img, x, y, targetW, targetH);
+  ctx.restore();
+}
+
+function loadImageFromSrc(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("워터마크 이미지 로드 실패"));
+    img.src = src;
+  });
+}
+
+async function applyWatermarks(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  wm: WatermarkOptions,
+) {
+  if (!wm.enabled) return;
+  await drawImageWatermark(ctx, width, height, wm);
+  drawTextWatermark(ctx, width, height, wm);
 }
 
 function buildFileName(
@@ -215,7 +268,7 @@ export async function processImage(
   );
   ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
 
-  drawWatermark(ctx, spec.width, spec.height, options.watermark);
+  await applyWatermarks(ctx, spec.width, spec.height, options.watermark);
 
   const mime = `image/${spec.format}`;
   const blob = await new Promise<Blob>((resolve, reject) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PLATFORMS, type PlatformSpec } from "@/lib/platforms/specs";
 import {
   DEFAULT_OPTIONS,
@@ -18,6 +18,14 @@ import {
   findMapping,
   type CsvMappingResult,
 } from "@/lib/image/csvMapping";
+import {
+  loadLastState,
+  saveLastState,
+  loadPresets,
+  upsertPreset,
+  deletePreset,
+  type Preset,
+} from "@/lib/storage";
 
 type SourceImage = {
   file: File;
@@ -59,13 +67,49 @@ export function SellerImageTool() {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presetsMounted, setPresetsMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const allSpecs = useMemo(
     () => PLATFORMS.flatMap((p) => p.specs.map((s) => ({ p, s }))),
     [],
   );
+
+  // 최초 마운트 시 localStorage 에서 마지막 상태 복원
+  useEffect(() => {
+    const last = loadLastState();
+    if (last) {
+      if (Array.isArray(last.selectedSpecIds) && last.selectedSpecIds.length > 0) {
+        setSelectedSpecs(new Set(last.selectedSpecIds));
+      }
+      if (last.options) {
+        setOptions({
+          ...DEFAULT_OPTIONS,
+          ...last.options,
+          watermark: { ...DEFAULT_OPTIONS.watermark, ...last.options.watermark },
+          fileName: { ...DEFAULT_OPTIONS.fileName, ...last.options.fileName },
+        });
+      }
+      if (typeof last.removeBgEnabled === "boolean") {
+        setRemoveBgEnabled(last.removeBgEnabled);
+      }
+    }
+    setPresets(loadPresets());
+    setPresetsMounted(true);
+  }, []);
+
+  // 상태 변경 시 자동 저장 (마운트 완료 이후에만)
+  useEffect(() => {
+    if (!presetsMounted) return;
+    saveLastState({
+      selectedSpecIds: Array.from(selectedSpecs),
+      options,
+      removeBgEnabled,
+    });
+  }, [selectedSpecs, options, removeBgEnabled, presetsMounted]);
 
   const handleFiles = useCallback((fileList: FileList | File[]) => {
     const files = Array.from(fileList).filter((f) =>
@@ -171,6 +215,59 @@ export function SellerImageTool() {
       setProcessing(false);
     }
   }, [sources, selectedSpecs, allSpecs, options, removeBgEnabled, csvMapping]);
+
+  const applyPreset = useCallback((preset: Preset) => {
+    setSelectedSpecs(new Set(preset.state.selectedSpecIds));
+    setOptions({
+      ...DEFAULT_OPTIONS,
+      ...preset.state.options,
+      watermark: {
+        ...DEFAULT_OPTIONS.watermark,
+        ...preset.state.options.watermark,
+      },
+      fileName: {
+        ...DEFAULT_OPTIONS.fileName,
+        ...preset.state.options.fileName,
+      },
+    });
+    setRemoveBgEnabled(preset.state.removeBgEnabled);
+  }, []);
+
+  const saveCurrentAsPreset = useCallback(() => {
+    const name = window.prompt("프리셋 이름을 입력하세요 (기존 이름이면 덮어씀)");
+    if (!name?.trim()) return;
+    const next = upsertPreset(name.trim(), {
+      selectedSpecIds: Array.from(selectedSpecs),
+      options,
+      removeBgEnabled,
+    });
+    setPresets(next);
+  }, [selectedSpecs, options, removeBgEnabled]);
+
+  const removePreset = useCallback((id: string) => {
+    if (!window.confirm("이 프리셋을 삭제하시겠습니까?")) return;
+    setPresets(deletePreset(id));
+  }, []);
+
+  const handleLogoUpload = useCallback(async (file: File) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    setOptions((prev) => ({
+      ...prev,
+      watermark: { ...prev.watermark, imageDataUrl: dataUrl, enabled: true },
+    }));
+  }, []);
+
+  const clearLogo = useCallback(() => {
+    setOptions((prev) => ({
+      ...prev,
+      watermark: { ...prev.watermark, imageDataUrl: undefined },
+    }));
+  }, []);
 
   const handleCsv = useCallback(async (file: File) => {
     setCsvError(null);
@@ -319,10 +416,69 @@ export function SellerImageTool() {
         </div>
       </section>
 
+      {presetsMounted && presets.length > 0 && (
+        <section className="mb-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                💾 저장된 프리셋
+              </div>
+              <span className="text-[11px] text-zinc-500">
+                자주 쓰는 규격 조합을 원클릭으로 로드
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {presets.map((p) => (
+                <div
+                  key={p.id}
+                  className="group inline-flex items-center gap-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 pl-3 pr-1 py-1 text-xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400"
+                    title={`${p.state.selectedSpecIds.length}개 규격`}
+                  >
+                    {p.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePreset(p.id)}
+                    className="rounded-full p-0.5 text-zinc-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-600"
+                    aria-label={`${p.name} 삭제`}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    >
+                      <path d="M3 3l6 6M9 3l-6 6" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-          변환할 플랫폼 / 규격
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            변환할 플랫폼 / 규격
+          </h2>
+          <button
+            type="button"
+            onClick={saveCurrentAsPreset}
+            className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            + 현재 설정을 프리셋으로 저장
+          </button>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {PLATFORMS.map((platform) => {
             const specIds = platform.specs.map((s) => s.id);
@@ -625,6 +781,97 @@ export function SellerImageTool() {
                     className="mt-1 w-full disabled:opacity-50"
                   />
                 </label>
+
+                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      🖼️ 로고 이미지 워터마크
+                    </span>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        e.target.files?.[0] && handleLogoUpload(e.target.files[0])
+                      }
+                    />
+                    {options.watermark.imageDataUrl ? (
+                      <button
+                        type="button"
+                        onClick={clearLogo}
+                        className="text-[11px] text-red-500 hover:underline"
+                      >
+                        제거
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={!options.watermark.enabled}
+                        className="text-[11px] text-emerald-600 hover:underline disabled:opacity-50"
+                      >
+                        로고 선택
+                      </button>
+                    )}
+                  </div>
+                  {options.watermark.imageDataUrl && (
+                    <div className="mb-2 flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={options.watermark.imageDataUrl}
+                        alt="로고 미리보기"
+                        className="h-10 w-10 rounded border border-zinc-200 dark:border-zinc-800 bg-white object-contain p-1"
+                      />
+                      <span className="text-[11px] text-zinc-500">
+                        위치와 함께 이미지 위에 겹쳐집니다
+                      </span>
+                    </div>
+                  )}
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                    로고 크기 (
+                    {Math.round((options.watermark.imageScale ?? 0.15) * 100)}%)
+                    <input
+                      type="range"
+                      min={5}
+                      max={40}
+                      value={Math.round(
+                        (options.watermark.imageScale ?? 0.15) * 100,
+                      )}
+                      onChange={(e) =>
+                        setWatermark("imageScale", Number(e.target.value) / 100)
+                      }
+                      disabled={
+                        !options.watermark.enabled ||
+                        !options.watermark.imageDataUrl
+                      }
+                      className="mt-1 w-full disabled:opacity-50"
+                    />
+                  </label>
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                    로고 투명도 (
+                    {Math.round((options.watermark.imageOpacity ?? 0.7) * 100)}%)
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      value={Math.round(
+                        (options.watermark.imageOpacity ?? 0.7) * 100,
+                      )}
+                      onChange={(e) =>
+                        setWatermark(
+                          "imageOpacity",
+                          Number(e.target.value) / 100,
+                        )
+                      }
+                      disabled={
+                        !options.watermark.enabled ||
+                        !options.watermark.imageDataUrl
+                      }
+                      className="mt-1 w-full disabled:opacity-50"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
