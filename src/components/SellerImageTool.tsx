@@ -12,6 +12,7 @@ import {
   type WatermarkPosition,
 } from "@/lib/image/process";
 import { buildZip, downloadBlob } from "@/lib/image/zip";
+import { removeBg, blobToImage, type RemoveBgProgress } from "@/lib/image/removeBg";
 
 type SourceImage = {
   file: File;
@@ -45,6 +46,8 @@ export function SellerImageTool() {
     done: 0,
     total: 0,
   });
+  const [aiPhase, setAiPhase] = useState<RemoveBgProgress | null>(null);
+  const [removeBgEnabled, setRemoveBgEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -119,7 +122,14 @@ export function SellerImageTool() {
     const out: ProcessedImage[] = [];
     try {
       for (const src of sources) {
-        const img = await loadImage(src.file);
+        let img: HTMLImageElement;
+        if (removeBgEnabled) {
+          const cleaned = await removeBg(src.file, (p) => setAiPhase(p));
+          img = await blobToImage(cleaned);
+        } else {
+          img = await loadImage(src.file);
+        }
+        setAiPhase(null);
         for (const { platformId, spec } of selectedList) {
           const result = await processImage(
             img,
@@ -136,9 +146,10 @@ export function SellerImageTool() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "처리 중 오류가 발생했습니다");
     } finally {
+      setAiPhase(null);
       setProcessing(false);
     }
-  }, [sources, selectedSpecs, allSpecs, options]);
+  }, [sources, selectedSpecs, allSpecs, options, removeBgEnabled]);
 
   const downloadZip = useCallback(async () => {
     if (results.length === 0) return;
@@ -320,6 +331,32 @@ export function SellerImageTool() {
       </section>
 
       <section className="mb-6">
+        <div className="mb-3 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={removeBgEnabled}
+              onChange={(e) => setRemoveBgEnabled(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-emerald-600"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                🪄 AI 배경 자동 제거
+                <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  BETA
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                상품을 자동으로 감지해 배경을 투명하게 만듭니다. 흰색 배경 규격에
+                자동으로 채워집니다.{" "}
+                <span className="text-zinc-500">
+                  최초 사용 시 AI 모델(약 40MB)이 브라우저에 캐시됩니다.
+                </span>
+              </div>
+            </div>
+          </label>
+        </div>
+
         <button
           type="button"
           onClick={() => setShowOptions((v) => !v)}
@@ -483,7 +520,9 @@ export function SellerImageTool() {
           className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
         >
           {processing
-            ? `변환 중... ${progress.done}/${progress.total}`
+            ? aiPhase
+              ? aiPhase.message
+              : `변환 중... ${progress.done}/${progress.total}`
             : "변환 시작"}
         </button>
         {results.length > 0 && (
