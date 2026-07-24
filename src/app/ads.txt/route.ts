@@ -1,12 +1,9 @@
-// AdSense 활성화 시 필수 파일.
-// NEXT_PUBLIC_ADSENSE_CLIENT 환경변수 예: ca-pub-1234567890123456
-// 이 파일이 응답하는 형식:
-//   google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+import { getAdSenseClient } from "@/components/AdSense";
 
 export const dynamic = "force-static";
 
 export function GET() {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const client = getAdSenseClient();
   if (!client) {
     return new Response("# AdSense not configured yet\n", {
       status: 200,

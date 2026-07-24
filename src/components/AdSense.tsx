@@ -2,15 +2,18 @@ import Script from "next/script";
 
 /**
  * AdSense Auto Ads 로더.
- *
- * 활성화 방법:
- *   1. https://adsense.google.com 에서 사이트 등록 후 Publisher ID 발급
- *      (형식: ca-pub-XXXXXXXXXXXXXXXX)
- *   2. Vercel 환경변수 NEXT_PUBLIC_ADSENSE_CLIENT 에 값 설정
- *   3. 재배포 시 자동으로 스크립트 로드됨
+ * Publisher ID 는 브라우저에 그대로 노출되는 공개 값이라 하드코딩해도 안전.
+ * 필요 시 NEXT_PUBLIC_ADSENSE_CLIENT 환경변수로 오버라이드 가능.
  */
+const DEFAULT_ADSENSE_CLIENT = "ca-pub-9260525121131483";
+
+export function getAdSenseClient(): string | null {
+  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? DEFAULT_ADSENSE_CLIENT;
+  return client || null;
+}
+
 export function AdSenseLoader() {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const client = getAdSenseClient();
   if (!client) return null;
 
   return (
