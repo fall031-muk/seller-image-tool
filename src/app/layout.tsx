@@ -64,6 +64,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "1OidjJAqR96Fx60IkW3yNjZNQM1_YMgxlq7Gqb5Ko0w",
+    other: {
+      "naver-site-verification": "21fe7004cf8b283e60520d04de671559e53859a9",
+    },
   },
   category: "productivity",
 };
