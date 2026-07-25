@@ -66,6 +66,7 @@ export const metadata: Metadata = {
     google: "1OidjJAqR96Fx60IkW3yNjZNQM1_YMgxlq7Gqb5Ko0w",
     other: {
       "naver-site-verification": "21fe7004cf8b283e60520d04de671559e53859a9",
+      "msvalidate.01": "50761763FEDF7CCC481261F2BC6DC4D6",
     },
   },
   category: "productivity",
