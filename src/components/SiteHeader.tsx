@@ -37,6 +37,18 @@ export function SiteHeader() {
           >
             규격 가이드
           </Link>
+          <Link
+            href="/blog"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            블로그
+          </Link>
+          <Link
+            href="/about"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            소개
+          </Link>
         </nav>
       </div>
     </header>

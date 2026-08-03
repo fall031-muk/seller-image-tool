@@ -76,6 +76,33 @@ export function articleJsonLd(opts: {
   };
 }
 
+export function blogPostJsonLd(opts: {
+  title: string;
+  description: string;
+  slug: string;
+  publishedAt: string;
+  updatedAt: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: opts.title,
+    description: opts.description,
+    url: `${SITE.url}/blog/${opts.slug}`,
+    inLanguage: "ko",
+    datePublished: opts.publishedAt,
+    dateModified: opts.updatedAt,
+    author: {
+      "@type": "Organization",
+      name: SITE.name,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE.name,
+    },
+  };
+}
+
 export function breadcrumbJsonLd(items: { name: string; url: string }[]) {
   return {
     "@context": "https://schema.org",

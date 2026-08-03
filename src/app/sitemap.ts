@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/site";
 import { GUIDES } from "@/lib/guides/data";
+import { BLOG_POSTS } from "@/lib/blog/data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -29,6 +30,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
+    {
+      url: `${SITE.url}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    },
+    ...BLOG_POSTS.map((p) => ({
+      url: `${SITE.url}/blog/${p.slug}`,
+      lastModified: new Date(p.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    {
+      url: `${SITE.url}/about`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${SITE.url}/contact`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    },
     {
       url: `${SITE.url}/privacy`,
       lastModified: now,
