@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/site";
-import { GUIDES } from "@/lib/guides/data";
+import { INDEXED_GUIDES } from "@/lib/guides/data";
 import { BLOG_POSTS } from "@/lib/blog/data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.8,
     },
-    ...GUIDES.map((g) => ({
+    ...INDEXED_GUIDES.map((g) => ({
       url: `${SITE.url}/guide/${g.slug}`,
       lastModified: new Date(g.updatedAt),
       changeFrequency: "monthly" as const,

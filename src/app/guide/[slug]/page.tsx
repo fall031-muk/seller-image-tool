@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GUIDES, getGuideBySlug } from "@/lib/guides/data";
+import { GUIDES, INDEXED_GUIDES, getGuideBySlug } from "@/lib/guides/data";
 import { getPlatformById } from "@/lib/platforms/specs";
 import {
   JsonLd,
@@ -30,6 +30,10 @@ export async function generateMetadata({
     description: guide.description,
     keywords: guide.keywords,
     alternates: { canonical: `/guide/${guide.slug}` },
+    // 분량이 얇은 플랫폼 가이드는 단독 색인 대신 /guide 통합 비교표로 평가받는다.
+    robots: guide.noindex
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
     openGraph: {
       type: "article",
       title: guide.title,
@@ -197,8 +201,18 @@ export default async function GuidePage({
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
             다른 플랫폼 가이드
           </h2>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            13개 플랫폼 규격을 한 표로 비교하려면{" "}
+            <Link
+              href="/guide"
+              className="font-semibold text-emerald-600 hover:underline"
+            >
+              전체 비교표
+            </Link>
+            를 확인하세요.
+          </p>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-            {GUIDES.filter((g) => g.slug !== guide.slug).map((g) => (
+            {INDEXED_GUIDES.filter((g) => g.slug !== guide.slug).map((g) => (
               <li key={g.slug}>
                 <Link
                   href={`/guide/${g.slug}`}
