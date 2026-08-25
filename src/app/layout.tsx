@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { SITE } from "@/lib/site";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSenseLoader } from "@/components/AdSense";
@@ -37,20 +37,12 @@ export const metadata: Metadata = {
     siteName: SITE.name,
     title: `${SITE.name} — 상품 이미지 한 장으로 모든 플랫폼 규격 자동 변환`,
     description: SITE.description,
-    images: [
-      {
-        url: absoluteUrl(SITE.ogImage),
-        width: 1200,
-        height: 630,
-        alt: SITE.name,
-      },
-    ],
+    // og 이미지는 app/opengraph-image.tsx 파일 컨벤션이 자동으로 붙인다.
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE.name} — 셀러용 이미지 자동 변환`,
     description: SITE.description,
-    images: [absoluteUrl(SITE.ogImage)],
   },
   robots: {
     index: true,

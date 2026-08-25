@@ -18,17 +18,23 @@ export type Platform = {
   name: string;
   color: string;
   specs: PlatformSpec[];
-  docsUrl?: string;
+  /** 판매자가 규격 원문을 직접 확인할 수 있는 공식 페이지. */
+  officialUrl?: string;
+  /** officialUrl 이 실제로 무엇인지 정확히 밝히는 이름표. */
+  officialLabel?: string;
 };
 
-// NOTE: 각 플랫폼의 최신 규격은 반드시 셀러센터 공식 문서에서 재확인 필요.
-// 아래는 2024~2025년 기준 일반적으로 알려진 규격.
+// 각 플랫폼 셀러센터의 공개 자료와 실제 상품 등록 과정에서 통용되는 실무 기준을
+// 정리한 값입니다. 플랫폼 정책은 예고 없이 바뀔 수 있으므로 각 가이드에 공식 페이지
+// 링크와 최종 확인일을 함께 표기합니다. SPECS_VERIFIED_AT 을 함께 갱신하세요.
+export const SPECS_VERIFIED_AT = "2026-08-25";
 export const PLATFORMS: Platform[] = [
   {
     id: "smartstore",
     name: "네이버 스마트스토어",
     color: "#03C75A",
-    docsUrl: "https://sell.smartstore.naver.com/",
+    officialUrl: "https://sell.smartstore.naver.com/",
+    officialLabel: "네이버 스마트스토어 판매자센터",
     specs: [
       {
         id: "smartstore-main",
@@ -58,7 +64,8 @@ export const PLATFORMS: Platform[] = [
     id: "coupang",
     name: "쿠팡",
     color: "#F73B4B",
-    docsUrl: "https://wing.coupang.com/",
+    officialUrl: "https://wing.coupang.com/",
+    officialLabel: "쿠팡 윙 판매자 오피스",
     specs: [
       {
         id: "coupang-main",
@@ -87,6 +94,8 @@ export const PLATFORMS: Platform[] = [
     id: "11st",
     name: "11번가",
     color: "#FF0038",
+    officialUrl: "https://soffice.11st.co.kr/",
+    officialLabel: "11번가 셀러오피스",
     specs: [
       {
         id: "11st-main",
@@ -104,6 +113,8 @@ export const PLATFORMS: Platform[] = [
     id: "gmarket",
     name: "지마켓/옥션",
     color: "#00A650",
+    officialUrl: "https://www.esmplus.com/",
+    officialLabel: "ESM Plus (지마켓·옥션 통합 판매자센터)",
     specs: [
       {
         id: "gmarket-main",
@@ -121,6 +132,8 @@ export const PLATFORMS: Platform[] = [
     id: "musinsa",
     name: "무신사",
     color: "#000000",
+    officialUrl: "https://partner.musinsa.com/",
+    officialLabel: "무신사 파트너센터",
     specs: [
       {
         id: "musinsa-main",
@@ -139,6 +152,8 @@ export const PLATFORMS: Platform[] = [
     id: "kakao",
     name: "카카오톡 스토어",
     color: "#FEE500",
+    officialUrl: "https://store.kakao.com/",
+    officialLabel: "카카오톡 스토어",
     specs: [
       {
         id: "kakao-main",
@@ -156,6 +171,8 @@ export const PLATFORMS: Platform[] = [
     id: "instagram",
     name: "인스타그램 (피드)",
     color: "#E4405F",
+    officialUrl: "https://help.instagram.com/",
+    officialLabel: "인스타그램 고객센터",
     specs: [
       {
         id: "instagram-feed",
@@ -183,6 +200,8 @@ export const PLATFORMS: Platform[] = [
     id: "ohou",
     name: "오늘의집",
     color: "#35C5F0",
+    officialUrl: "https://partner.ohou.se/",
+    officialLabel: "오늘의집 파트너센터",
     specs: [
       {
         id: "ohou-main",
@@ -229,6 +248,8 @@ export const PLATFORMS: Platform[] = [
     id: "zigzag",
     name: "지그재그",
     color: "#FA5252",
+    officialUrl: "https://partners.kakaostyle.com/",
+    officialLabel: "지그재그 파트너센터 (카카오스타일)",
     specs: [
       {
         id: "zigzag-main",
@@ -246,6 +267,8 @@ export const PLATFORMS: Platform[] = [
     id: "ssg",
     name: "SSG.com",
     color: "#F4501E",
+    officialUrl: "https://www.ssg.com/",
+    officialLabel: "SSG.com 공식 사이트",
     specs: [
       {
         id: "ssg-main",
@@ -263,6 +286,8 @@ export const PLATFORMS: Platform[] = [
     id: "lotteon",
     name: "롯데온",
     color: "#EF3A3A",
+    officialUrl: "https://www.lotteon.com/",
+    officialLabel: "롯데온 공식 사이트",
     specs: [
       {
         id: "lotteon-main",

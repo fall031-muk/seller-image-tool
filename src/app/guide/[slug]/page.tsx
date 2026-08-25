@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GUIDES, INDEXED_GUIDES, getGuideBySlug } from "@/lib/guides/data";
-import { getPlatformById } from "@/lib/platforms/specs";
+import { getPlatformById, SPECS_VERIFIED_AT } from "@/lib/platforms/specs";
+import {
+  PlatformFrameDiagram,
+  FitVsCropDiagram,
+  SearchGridScaleDiagram,
+} from "@/components/SpecDiagram";
 import {
   JsonLd,
   articleJsonLd,
@@ -58,6 +63,8 @@ export default async function GuidePage({
   if (!guide) notFound();
 
   const platform = getPlatformById(guide.platformId);
+  const mainSpec =
+    platform?.specs.find((s) => s.imageType === "main") ?? platform?.specs[0];
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -101,8 +108,12 @@ export default async function GuidePage({
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             {guide.h1}
           </h1>
-          <div className="mt-2 text-xs text-zinc-500">
-            최종 업데이트: {guide.updatedAt}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+            <span>{SITE.authorBio}</span>
+            <span aria-hidden="true">·</span>
+            <span>최종 업데이트 {guide.updatedAt}</span>
+            <span aria-hidden="true">·</span>
+            <span>규격 확인 {SPECS_VERIFIED_AT}</span>
           </div>
           <p className="mt-4 text-sm sm:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed">
             {guide.intro}
@@ -160,8 +171,61 @@ export default async function GuidePage({
                 </table>
               </div>
             )}
+            {section.spec && section.spec.length > 0 && platform && (
+              <PlatformFrameDiagram
+                specs={section.spec}
+                platformName={platform.name}
+              />
+            )}
           </section>
         ))}
+
+        {mainSpec && platform && (
+          <section className="not-prose mb-8">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+              규격을 눈으로 확인하기
+            </h2>
+            <p className="mt-3 text-sm sm:text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
+              숫자만으로는 실제 작업에서 무엇이 달라지는지 감이 오지 않습니다.
+              아래 두 그림은 {platform.name}의 대표 규격인 {mainSpec.width}×
+              {mainSpec.height}를 기준으로, 원본을 이 규격에 맞출 때 생기는
+              차이와 구매자가 실제로 보게 되는 크기를 같은 축척으로 그린
+              것입니다.
+            </p>
+            <FitVsCropDiagram
+              width={mainSpec.width}
+              height={mainSpec.height}
+              targetLabel={`${platform.name} ${mainSpec.name}`}
+            />
+            <SearchGridScaleDiagram
+              width={mainSpec.width}
+              height={mainSpec.height}
+              platformName={platform.name}
+            />
+          </section>
+        )}
+
+        {platform?.officialUrl && (
+          <section className="not-prose mb-8 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-5">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              공식 출처에서 직접 확인하기
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+              이 문서의 규격은 {SPECS_VERIFIED_AT} 기준으로 정리했습니다.
+              플랫폼 정책은 예고 없이 바뀔 수 있으므로, 실제 상품을 등록하기
+              전에는 아래 공식 페이지에서 최신 기준을 함께 확인하시기
+              바랍니다.
+            </p>
+            <a
+              href={platform.officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+            >
+              {platform.officialLabel ?? platform.name} ↗
+            </a>
+          </section>
+        )}
 
         <section className="not-prose mt-10">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">

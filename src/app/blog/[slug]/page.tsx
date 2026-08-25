@@ -85,6 +85,8 @@ export default async function BlogPostPage({
             {post.title}
           </h1>
           <div className="mt-2 text-xs text-zinc-500">
+            {SITE.authorBio}
+            <span className="mx-2" aria-hidden="true">·</span>
             {post.publishedAt} 게시
           </div>
           <p className="mt-4 text-sm sm:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed">

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GUIDES, INDEXED_GUIDES } from "@/lib/guides/data";
-import { PLATFORMS } from "@/lib/platforms/specs";
+import { PLATFORMS, SPECS_VERIFIED_AT } from "@/lib/platforms/specs";
+import { RatioFamilyDiagram } from "@/components/SpecDiagram";
 import { JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/JsonLd";
 import { SITE } from "@/lib/site";
 
@@ -49,7 +50,7 @@ const HUB_FAQS = [
   },
   {
     q: "표에 있는 규격은 언제 기준인가요?",
-    a: "각 플랫폼 셀러센터의 공개 자료와 일반적으로 통용되는 실무 기준을 정리한 값입니다. 플랫폼 정책은 예고 없이 바뀔 수 있으므로, 실제 상품 등록 전에는 해당 플랫폼 셀러센터의 최신 공지를 함께 확인하시기 바랍니다.",
+    a: `각 플랫폼 셀러센터의 공개 자료와 실무에서 통용되는 기준을 정리한 값이며, 최종 확인일은 ${SPECS_VERIFIED_AT}입니다. 이 페이지의 '공식 출처' 목록에서 각 플랫폼 원문을 직접 확인하실 수 있습니다. 플랫폼 정책은 예고 없이 바뀔 수 있으므로 중요한 등록 작업 전에는 원문을 함께 확인하시기 바랍니다.`,
   },
 ];
 
@@ -60,9 +61,60 @@ const hubJsonLd = {
   description: metadata.description,
   url: `${SITE.url}/guide`,
   inLanguage: "ko",
-  author: { "@type": "Organization", name: SITE.name, url: SITE.url },
+  author: { "@type": "Person", name: SITE.author, description: SITE.authorBio },
   publisher: { "@type": "Organization", name: SITE.name, url: SITE.url },
 };
+
+/**
+ * 흔히 쓰는 비율에 근사 매칭한다. 1000×1333 처럼 정수비가 딱 떨어지지 않는
+ * 실제 규격을 "1000:1333" 이 아니라 "3:4" 로 읽히게 하기 위함.
+ */
+const COMMON_RATIOS: { label: string; value: number }[] = [
+  { label: "1:1 정사각", value: 1 },
+  { label: "4:5 세로형", value: 4 / 5 },
+  { label: "3:4 세로형", value: 3 / 4 },
+  { label: "2:3 세로형", value: 2 / 3 },
+  { label: "9:16 세로형", value: 9 / 16 },
+  { label: "4:3 가로형", value: 4 / 3 },
+  { label: "16:9 가로형", value: 16 / 9 },
+];
+
+function ratioLabelFor(width: number, height: number): string {
+  const r = width / height;
+  const hit = COMMON_RATIOS.find((c) => Math.abs(r - c.value) < 0.01);
+  return hit ? hit.label : `${r.toFixed(2)}:1`;
+}
+
+/** 실제 스펙 데이터에서 비율 계열을 뽑아낸다. 표와 그림이 어긋나지 않도록. */
+function buildRatioFamilies() {
+  const map = new Map<
+    string,
+    { ratioLabel: string; w: number; h: number; platforms: Set<string> }
+  >();
+
+  for (const platform of PLATFORMS) {
+    for (const spec of platform.specs) {
+      const ratioLabel = ratioLabelFor(spec.width, spec.height);
+      const entry = map.get(ratioLabel) ?? {
+        ratioLabel,
+        w: spec.width,
+        h: spec.height,
+        platforms: new Set<string>(),
+      };
+      entry.platforms.add(platform.name);
+      map.set(ratioLabel, entry);
+    }
+  }
+
+  return [...map.values()]
+    .sort((a, b) => b.w / b.h - a.w / a.h)
+    .map((e) => ({
+      ratioLabel: e.ratioLabel,
+      w: e.w,
+      h: e.h,
+      platforms: [...e.platforms],
+    }));
+}
 
 export default function GuideIndexPage() {
   return (
@@ -114,10 +166,7 @@ export default function GuideIndexPage() {
             <tbody>
               {PLATFORMS.flatMap((platform) =>
                 platform.specs.map((s, i) => {
-                  const ratio =
-                    s.width === s.height
-                      ? "1:1"
-                      : `${(s.width / s.height).toFixed(2)}:1`;
+                  const ratio = ratioLabelFor(s.width, s.height).split(" ")[0];
                   return (
                     <tr
                       key={s.id}
@@ -149,8 +198,9 @@ export default function GuideIndexPage() {
           </table>
         </div>
         <p className="mt-3 text-xs text-zinc-500">
-          플랫폼 정책은 수시로 변경될 수 있습니다. 실제 등록 전 각 셀러센터의
-          최신 공지를 함께 확인하세요.
+          최종 확인 {SPECS_VERIFIED_AT} · 플랫폼 정책은 예고 없이 바뀔 수
+          있습니다. 아래 &lsquo;공식 출처&rsquo; 목록에서 각 플랫폼의 원문을
+          직접 확인하실 수 있습니다.
         </p>
       </section>
 
@@ -158,6 +208,7 @@ export default function GuideIndexPage() {
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           표에서 읽어야 할 세 가지
         </h2>
+        <RatioFamilyDiagram families={buildRatioFamilies()} />
         <div className="mt-3 space-y-4 text-sm sm:text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
           <p>
             <strong className="text-zinc-900 dark:text-zinc-100">
@@ -289,6 +340,37 @@ export default function GuideIndexPage() {
             })}
           </ul>
         </div>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          공식 출처
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          위 표의 수치는 각 플랫폼 셀러센터의 공개 자료와 실무에서 통용되는
+          기준을 정리한 값입니다. 판매자가 원문을 직접 확인할 수 있도록 공식
+          페이지를 함께 싣습니다. 공식 판매자 채널을 확인하지 못한 플랫폼은
+          링크를 넣지 않았습니다.
+        </p>
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {PLATFORMS.filter((p) => p.officialUrl).map((p) => (
+            <li key={p.id}>
+              <a
+                href={p.officialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-baseline justify-between gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-2 text-sm hover:border-emerald-500"
+              >
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {p.name}
+                </span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                  {p.officialLabel} ↗
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="mb-10">

@@ -66,8 +66,9 @@ export function articleJsonLd(opts: {
     datePublished: opts.updatedAt,
     dateModified: opts.updatedAt,
     author: {
-      "@type": "Organization",
-      name: SITE.name,
+      "@type": "Person",
+      name: SITE.author,
+      description: SITE.authorBio,
     },
     publisher: {
       "@type": "Organization",
@@ -93,8 +94,9 @@ export function blogPostJsonLd(opts: {
     datePublished: opts.publishedAt,
     dateModified: opts.updatedAt,
     author: {
-      "@type": "Organization",
-      name: SITE.name,
+      "@type": "Person",
+      name: SITE.author,
+      description: SITE.authorBio,
     },
     publisher: {
       "@type": "Organization",
