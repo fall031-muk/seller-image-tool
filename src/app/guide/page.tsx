@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GUIDES, INDEXED_GUIDES } from "@/lib/guides/data";
+import { INDEXED_GUIDES } from "@/lib/guides/data";
 import { PLATFORMS, SPECS_VERIFIED_AT } from "@/lib/platforms/specs";
 import { RatioFamilyDiagram } from "@/components/SpecDiagram";
 import { JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/JsonLd";
@@ -315,31 +315,11 @@ export default function GuideIndexPage() {
           ))}
         </ul>
 
-        <div className="mt-4 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
-          <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            그 외 플랫폼 요약
-          </div>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            아래 플랫폼은 위 비교표에서 규격을 확인할 수 있으며, 간단한 요약
-            문서도 함께 제공합니다.
-          </p>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {GUIDES.filter((g) => g.noindex).map((g) => {
-              const platformName =
-                PLATFORMS.find((p) => p.id === g.platformId)?.name ?? g.h1;
-              return (
-                <li key={g.slug}>
-                  <Link
-                    href={`/guide/${g.slug}`}
-                    className="inline-block rounded-md border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:border-emerald-500 hover:text-emerald-600"
-                  >
-                    {platformName}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          상세 가이드는 실무에서 반려 사례와 검수 기준을 충분히 확인한 위
+          플랫폼에 한해 작성합니다. 나머지 플랫폼은 같은 형식의 문서를
+          찍어내는 대신, 이 페이지 상단 비교표에서 규격만 정확히 다룹니다.
+        </p>
       </section>
 
       <section className="mb-10">

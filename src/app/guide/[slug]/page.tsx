@@ -35,10 +35,6 @@ export async function generateMetadata({
     description: guide.description,
     keywords: guide.keywords,
     alternates: { canonical: `/guide/${guide.slug}` },
-    // 분량이 얇은 플랫폼 가이드는 단독 색인 대신 /guide 통합 비교표로 평가받는다.
-    robots: guide.noindex
-      ? { index: false, follow: true }
-      : { index: true, follow: true },
     openGraph: {
       type: "article",
       title: guide.title,
@@ -186,11 +182,8 @@ export default async function GuidePage({
               규격을 눈으로 확인하기
             </h2>
             <p className="mt-3 text-sm sm:text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
-              숫자만으로는 실제 작업에서 무엇이 달라지는지 감이 오지 않습니다.
-              아래 두 그림은 {platform.name}의 대표 규격인 {mainSpec.width}×
-              {mainSpec.height}를 기준으로, 원본을 이 규격에 맞출 때 생기는
-              차이와 구매자가 실제로 보게 되는 크기를 같은 축척으로 그린
-              것입니다.
+              {platform.name} 대표 규격 {mainSpec.width}×{mainSpec.height}를
+              같은 축척으로 그린 그림입니다.
             </p>
             <FitVsCropDiagram
               width={mainSpec.width}
@@ -211,10 +204,7 @@ export default async function GuidePage({
               공식 출처에서 직접 확인하기
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-              이 문서의 규격은 {SPECS_VERIFIED_AT} 기준으로 정리했습니다.
-              플랫폼 정책은 예고 없이 바뀔 수 있으므로, 실제 상품을 등록하기
-              전에는 아래 공식 페이지에서 최신 기준을 함께 확인하시기
-              바랍니다.
+              {SPECS_VERIFIED_AT} 기준입니다. 등록 전 원문을 함께 확인하세요.
             </p>
             <a
               href={platform.officialUrl}
@@ -265,16 +255,6 @@ export default async function GuidePage({
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
             다른 플랫폼 가이드
           </h2>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            13개 플랫폼 규격을 한 표로 비교하려면{" "}
-            <Link
-              href="/guide"
-              className="font-semibold text-emerald-600 hover:underline"
-            >
-              전체 비교표
-            </Link>
-            를 확인하세요.
-          </p>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {INDEXED_GUIDES.filter((g) => g.slug !== guide.slug).map((g) => (
               <li key={g.slug}>
