@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   creator: SITE.author,
   alternates: {
     canonical: "/",
+    // 네이버 서치어드바이저가 RSS 제출을 따로 받는다. 크롤러와 피드 리더가
+    // 스스로 찾을 수 있도록 링크도 함께 노출한다.
+    types: {
+      "application/rss+xml": "/rss.xml",
+    },
   },
   openGraph: {
     type: "website",
