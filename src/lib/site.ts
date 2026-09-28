@@ -2,17 +2,23 @@
  * 사이트의 정식 URL. canonical, sitemap, robots, JSON-LD 가 전부 이 값을
  * 기준으로 만들어지므로 배포 도메인과 반드시 일치해야 한다.
  *
- * 1. NEXT_PUBLIC_SITE_URL — 직접 지정할 때(커스텀 도메인 등)
- * 2. URL — Netlify 가 빌드 시 사이트 대표 주소로 자동 주입한다
- * 3. localhost — 로컬 개발용 폴백
+ * 1. NEXT_PUBLIC_SITE_URL          — 직접 지정할 때(커스텀 도메인 등)
+ * 2. URL                           — Netlify 가 빌드 시 자동 주입
+ * 3. VERCEL_PROJECT_PRODUCTION_URL — Vercel 이 빌드 시 자동 주입(스킴 없음)
+ * 4. localhost                     — 로컬 개발용 폴백
  *
- * 도메인을 바꿔도 코드를 고칠 필요가 없도록 환경변수에서 읽는다.
+ * 폴백이 실수로 걸리면 canonical 이 localhost 로 찍혀 색인이 망가지므로,
+ * 호스팅별 변수를 모두 받아둔다.
  */
 function resolveSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL;
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL;
   if (!raw) return "http://localhost:3000";
-  // 끝의 슬래시가 붙어 오면 `${SITE.url}/` 조합에서 `//` 가 된다.
-  return raw.replace(/\/+$/, "");
+  // Vercel 은 스킴 없이 호스트만 준다. 끝의 슬래시는 `${SITE.url}/` 에서 `//` 가 된다.
+  const withScheme = /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
+  return withScheme.replace(/\/+$/, "");
 }
 
 export const SITE = {
