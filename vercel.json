@@ -8,5 +8,15 @@
     { "source": "/guide/ssg-image-guide", "destination": "/guide", "permanent": true },
     { "source": "/guide/lotteon-image-guide", "destination": "/guide", "permanent": true },
     { "source": "/guide/wemakeprice-image-guide", "destination": "/guide", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/opengraph-image",
+      "headers": [{ "key": "Content-Type", "value": "image/png" }]
+    },
+    {
+      "source": "/guide/:slug/opengraph-image",
+      "headers": [{ "key": "Content-Type", "value": "image/png" }]
+    }
   ]
 }
