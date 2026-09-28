@@ -37,6 +37,11 @@
       "permanent": true
     },
     {
+      "source": "/",
+      "destination": "https://seller-image-tool.netlify.app/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "destination": "https://seller-image-tool.netlify.app/:path*",
       "permanent": true
