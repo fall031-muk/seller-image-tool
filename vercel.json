@@ -1,22 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "comment": "이 사이트는 Netlify 로 이전했다. Vercel 배포는 옛 URL 의 색인과 유입을 넘기는 역할만 한다. 색인이 정리되면 Vercel 프로젝트를 삭제한다.",
   "redirects": [
-    { "source": "/guide/kakao-store-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/ohou-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/ably-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/zigzag-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/ssg-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/lotteon-image-guide", "destination": "/guide", "permanent": true },
-    { "source": "/guide/wemakeprice-image-guide", "destination": "/guide", "permanent": true }
-  ],
-  "headers": [
-    {
-      "source": "/opengraph-image",
-      "headers": [{ "key": "Content-Type", "value": "image/png" }]
-    },
-    {
-      "source": "/guide/:slug/opengraph-image",
-      "headers": [{ "key": "Content-Type", "value": "image/png" }]
-    }
+    { "source": "/guide/kakao-store-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/ohou-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/ably-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/zigzag-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/ssg-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/lotteon-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/guide/wemakeprice-image-guide", "destination": "https://seller-image-tool.netlify.app/guide", "permanent": true },
+    { "source": "/:path*", "destination": "https://seller-image-tool.netlify.app/:path*", "permanent": true }
   ]
 }
