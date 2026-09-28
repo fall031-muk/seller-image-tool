@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/guide/kakao-store-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/ohou-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/ably-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/zigzag-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/ssg-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/lotteon-image-guide", "destination": "/guide", "permanent": true },
+    { "source": "/guide/wemakeprice-image-guide", "destination": "/guide", "permanent": true }
+  ]
+}
