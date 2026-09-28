@@ -1,7 +1,24 @@
+/**
+ * 사이트의 정식 URL. canonical, sitemap, robots, JSON-LD 가 전부 이 값을
+ * 기준으로 만들어지므로 배포 도메인과 반드시 일치해야 한다.
+ *
+ * 1. NEXT_PUBLIC_SITE_URL — 직접 지정할 때(커스텀 도메인 등)
+ * 2. URL — Netlify 가 빌드 시 사이트 대표 주소로 자동 주입한다
+ * 3. localhost — 로컬 개발용 폴백
+ *
+ * 도메인을 바꿔도 코드를 고칠 필요가 없도록 환경변수에서 읽는다.
+ */
+function resolveSiteUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL;
+  if (!raw) return "http://localhost:3000";
+  // 끝의 슬래시가 붙어 오면 `${SITE.url}/` 조합에서 `//` 가 된다.
+  return raw.replace(/\/+$/, "");
+}
+
 export const SITE = {
   name: "셀러 이미지 변환기",
   shortName: "셀러 이미지 변환기",
-  url: "https://seller-image-tool.vercel.app",
+  url: resolveSiteUrl(),
   description:
     "상품 이미지 하나로 스마트스토어, 쿠팡, 11번가, 무신사, 카카오톡스토어, 인스타그램 등 각 플랫폼 규격에 맞춘 이미지를 한 번에 만드세요. 100% 브라우저에서 처리되어 이미지가 서버에 올라가지 않습니다.",
   keywords: [

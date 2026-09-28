@@ -1,5 +1,8 @@
 import { ImageResponse } from "next/og";
 
+// output: "export" 에서 이미지 생성 라우트도 정적으로 못박아야 한다.
+export const dynamic = "force-static";
+
 export const alt = "셀러 이미지 변환기 — 스마트스토어/쿠팡/무신사 규격 자동 변환";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

@@ -3,6 +3,9 @@ import { SITE } from "@/lib/site";
 import { INDEXED_GUIDES } from "@/lib/guides/data";
 import { BLOG_POSTS } from "@/lib/blog/data";
 
+// output: "export" 에서 파일 규약 라우트는 정적으로 못박아야 한다.
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   return [

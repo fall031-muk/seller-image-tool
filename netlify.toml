@@ -1,0 +1,67 @@
+# Next.js 정적 내보내기(output: "export") 결과물을 그대로 서빙한다.
+# 서버리스 함수나 Next 런타임 플러그인이 필요 없다.
+
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# 템플릿 복제에 가까워 삭제한 가이드들.
+# next.config 의 redirects() 는 정적 내보내기에서 동작하지 않으므로 여기서 처리한다.
+# 해당 플랫폼 규격은 /guide 통합 비교표에서 계속 다룬다.
+[[redirects]]
+  from = "/guide/kakao-store-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/ohou-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/ably-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/zigzag-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/ssg-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/lotteon-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guide/wemakeprice-image-guide"
+  to = "/guide"
+  status = 301
+  force = true
+
+# opengraph-image 파일 규약의 산출물은 확장자 없는 PNG 파일로 떨어진다.
+# 정적 호스팅은 확장자로 타입을 추론하므로 명시하지 않으면
+# application/octet-stream 으로 나가고 카카오·페이스북 썸네일이 깨진다.
+[[headers]]
+  for = "/opengraph-image"
+  [headers.values]
+    Content-Type = "image/png"
+
+[[headers]]
+  for = "/guide/:slug/opengraph-image"
+  [headers.values]
+    Content-Type = "image/png"
