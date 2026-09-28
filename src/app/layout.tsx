@@ -61,7 +61,12 @@ export const metadata: Metadata = {
       "-QZSj1qRFTuqLpJ0glMw73dv_Lw0XpcEoWdGLEFyeOM", // seller-image-tool.netlify.app
     ],
     other: {
-      "naver-site-verification": "21fe7004cf8b283e60520d04de671559e53859a9",
+      // 네이버는 주소 변경 도구가 없어 새 사이트를 따로 등록한다.
+      // 옛 사이트 등록을 유지해야 Yeti 가 옛 URL 의 301 을 확인한다.
+      "naver-site-verification": [
+        "21fe7004cf8b283e60520d04de671559e53859a9", // seller-image-tool.vercel.app
+        "2650c6ec55cdc2cd1b694ef205c4ebe873f9e43a", // seller-image-tool.netlify.app
+      ],
       "msvalidate.01": "50761763FEDF7CCC481261F2BC6DC4D6",
     },
   },
