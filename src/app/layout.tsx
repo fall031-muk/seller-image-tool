@@ -54,7 +54,12 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "1OidjJAqR96Fx60IkW3yNjZNQM1_YMgxlq7Gqb5Ko0w",
+    // Search Console 속성별로 값이 다르다. 두 속성을 동시에 검증 상태로
+    // 두어야 Vercel → Netlify 이전 중에 옛 URL 색인 삭제를 요청할 수 있다.
+    google: [
+      "1OidjJAqR96Fx60IkW3yNjZNQM1_YMgxlq7Gqb5Ko0w", // seller-image-tool.vercel.app
+      "-QZSj1qRFTuqLpJ0glMw73dv_Lw0XpcEoWdGLEFyeOM", // seller-image-tool.netlify.app
+    ],
     other: {
       "naver-site-verification": "21fe7004cf8b283e60520d04de671559e53859a9",
       "msvalidate.01": "50761763FEDF7CCC481261F2BC6DC4D6",
